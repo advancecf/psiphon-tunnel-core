@@ -1,0 +1,44 @@
+name: Build Psiphon Windows Client
+
+on:
+  push:
+    branches: [ "shirokhorshid" ]
+  pull_request:
+    branches: [ "shirokhorshid" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build Windows EXE
+        working-directory: ConsoleClient
+        run: |
+          mkdir -p ../dist
+
+          CGO_ENABLED=0 \
+          GOOS=windows \
+          GOARCH=amd64 \
+          go build \
+            -v \
+            -trimpath \
+            -ldflags="-s -w" \
+            -o ../dist/psiphon-client.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: psiphon-windows-client
+          path: dist/psiphon-client.exe
